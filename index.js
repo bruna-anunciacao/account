@@ -28,17 +28,18 @@ function operation() {
       switch (action) {
         case "Criar uma conta":
           createAccount();
-            break;
+          break;
         case "Consultar saldo":
-            break
+          getAccountBalance();
+          break;
         case "Depositar":
-            deposit()
-            break
+          deposit();
+          break;
         case "Sacar":
-            break
+          break;
         case "Sair":
-            console.log(chalk.blue('Obrigado por usar o nosso sistema!'))
-            process.exit();
+          console.log(chalk.blue("Obrigado por usar o nosso sistema!"));
+          process.exit();
       }
     })
     .catch((err) => console.log(err));
@@ -51,80 +52,120 @@ function createAccount() {
 }
 
 function buildAccount() {
-    inquirer.prompt([
-        {
-            name: 'accountName',
-            message: 'Digite o nome da conta:',
-        }
-    ]).then((answer) => {
-        const accountName = answer['accountName'];
-        if (!fs.existsSync('accounts')) {
-            fs.mkdirSync('accounts')
-        }
+  inquirer
+    .prompt([
+      {
+        name: "accountName",
+        message: "Digite o nome da conta:",
+      },
+    ])
+    .then((answer) => {
+      const accountName = answer["accountName"];
+      if (!fs.existsSync("accounts")) {
+        fs.mkdirSync("accounts");
+      }
 
-        if (fs.existsSync(`accounts/${accountName}.json`)) {
-            console.log(chalk.red('Esta conta já existe!'))
-            buildAccount()
-            return
+      if (fs.existsSync(`accounts/${accountName}.json`)) {
+        console.log(chalk.red("Esta conta já existe!"));
+        buildAccount();
+        return;
+      }
+      fs.writeFileSync(
+        `accounts/${accountName}.json`,
+        JSON.stringify({ name: accountName, balance: 0 }),
+        function (err) {
+          console.log(err);
         }
-        fs.writeFileSync(`accounts/${accountName}.json`, JSON.stringify({name: accountName, balance: 0}), function (err) {
-            console.log(err)
-        })
-        console.log(chalk.green('Conta criada com sucesso!'))
-        operation()
-    }).catch((err) => console.log(err))
+      );
+      console.log(chalk.green("Conta criada com sucesso!"));
+      operation();
+    })
+    .catch((err) => console.log(err));
 }
 
 // add an amount to the account
 function deposit() {
-    inquirer.prompt([{
-        name: 'accountName',
-        message: 'Digite o nome da conta:',
-
-    }
-]).then((answer) => {
-    const accountName = answer['accountName'];
-    if (!checkAccount(accountName)) {
-        return deposit()
-    }
-    inquirer.prompt([{
-        name: 'amount',
-        message: 'Digite o valor do depósito:',
-    },
-]).then((answer) => {
-    const amount = answer['amount'];
-    addAmount(accountName, amount)
-
-}).catch((err) => console.log(err))
-}
-)
-.catch((err) => console.log(err))
-}
-
-function checkAccount(account){
-    if (!fs.existsSync(`accounts/${account}.json`)) {
-        console.log(chalk.red('Esta conta não existe!'))
-        return false
-    }
-    return true
-}
-
-function addAmount(accountName, amount){
-    const accountData = getAccount(accountName)
-    if (!amount){
-        console.log(chalk.red('Valor inválido!'))
-        return deposit()
-    }
-    accountData.balance += parseFloat(amount)
-    fs.writeFileSync(`accounts/${accountName}.json`, JSON.stringify(accountData), function (err) {
-        console.log(err)
+  inquirer
+    .prompt([
+      {
+        name: "accountName",
+        message: "Digite o nome da conta:",
+      },
+    ])
+    .then((answer) => {
+      const accountName = answer["accountName"];
+      if (!checkAccount(accountName)) {
+        return deposit();
+      }
+      inquirer
+        .prompt([
+          {
+            name: "amount",
+            message: "Digite o valor do depósito:",
+          },
+        ])
+        .then((answer) => {
+          const amount = answer["amount"];
+          addAmount(accountName, amount);
+        })
+        .catch((err) => console.log(err));
     })
-    console.log(chalk.green(`Depósito de R$${amount} realizado com sucesso!`))
-    operation()
+    .catch((err) => console.log(err));
 }
 
-function getAccount(accountName){
-    const accountJSON = fs.readFileSync(`accounts/${accountName}.json`, {encoding: 'utf-8',
-    flag: 'r'})
-    return JSON.parse(accountJSON)
+function checkAccount(account) {
+  if (!fs.existsSync(`accounts/${account}.json`)) {
+    console.log(chalk.red("Esta conta não existe!"));
+    return false;
+  }
+  return true;
+}
+
+function addAmount(accountName, amount) {
+  const accountData = getAccount(accountName);
+  if (!amount) {
+    console.log(chalk.red("Valor inválido!"));
+    return deposit();
+  }
+  accountData.balance += parseFloat(amount);
+  fs.writeFileSync(
+    `accounts/${accountName}.json`,
+    JSON.stringify(accountData),
+    function (err) {
+      console.log(err);
+    }
+  );
+  console.log(chalk.green(`Depósito de R$${amount} realizado com sucesso!`));
+  operation();
+}
+
+function getAccount(accountName) {
+  const accountJSON = fs.readFileSync(`accounts/${accountName}.json`, {
+    encoding: "utf-8",
+    flag: "r",
+  });
+  return JSON.parse(accountJSON);
+}
+
+// get account balance
+function getAccountBalance() {
+  inquirer
+    .prompt([
+      {
+        name: "accountName",
+        message: "Digite o nome da conta:",
+      },
+    ])
+    .then((answer) => {
+      const account = answer["accountName"];
+      if (!checkAccount(account)) {
+        return getAccountBalance();
+      }
+      const accountData = getAccount(account);
+      console.log(
+        chalk.green(`O saldo da conta ${account} é R$${accountData.balance}`)
+      );
+      operation();
+    })
+    .catch((err) => console.log(err));
 }
