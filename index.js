@@ -28,6 +28,16 @@ function operation() {
       switch (action) {
         case "Criar uma conta":
           createAccount();
+            break;
+        case "Consultar saldo":
+            break
+        case "Depositar":
+            break
+        case "Sacar":
+            break
+        case "Sair":
+            console.log(chalk.blue('Obrigado por usar o nosso sistema!'))
+            process.exit();
       }
     })
     .catch((err) => console.log(err));
