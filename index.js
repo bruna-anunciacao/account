@@ -36,6 +36,7 @@ function operation() {
           deposit();
           break;
         case "Sacar":
+            withdraw();
           break;
         case "Sair":
           console.log(chalk.blue("Obrigado por usar o nosso sistema!"));
@@ -168,4 +169,51 @@ function getAccountBalance() {
       operation();
     })
     .catch((err) => console.log(err));
+}
+
+// withdwraw an amount from the account
+function withdraw() {
+    inquirer.prompt([
+        {
+            name: "accountName",
+            message: "Digite o nome da conta:"
+        }
+    ]).then((answer) => {
+        const accountName = answer["accountName"];
+        if (!checkAccount(accountName)) {
+            return withdraw();
+        }
+        inquirer.prompt([
+            {
+                name: "amount",
+                message: "Digite o valor do saque:"
+            }
+        ]).then((answer) => {
+            const amount = answer["amount"];
+            withdrawAmount(accountName, amount);
+        }).catch((err) => console.log(err));
+    }).catch((err) => console.log(err));
+}
+
+function withdrawAmount(accountName, amount) {
+    const accountData = getAccount(accountName);
+    if (!amount) {
+      console.log(chalk.red("Valor inválido!"));
+      return withdraw();
+    }
+    if (accountData.balance > 0) {
+        accountData.balance -= parseFloat(amount);
+        fs.writeFileSync(
+        `accounts/${accountName}.json`,
+        JSON.stringify(accountData),
+        function (err) {
+            console.log(err);
+        }
+        );
+    } else {
+        console.log(chalk.red("Saldo insuficiente!"));
+        return withdraw();
+    }
+    console.log(chalk.green(`Saque de R$${amount} realizado com sucesso!`));
+    operation();
 }
